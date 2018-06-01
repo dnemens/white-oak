@@ -1,0 +1,173 @@
+oaks <- read.csv("~/Grad School/JBLM project/analyses/ch 2 raw data.csv")
+oaks <- read.csv("G:/for R/ch 2 raw data.csv")
+attach(oaks)
+
+#loads necessary libraries
+library(dplyr)
+library(ggplot2)
+library(MASS)
+library(GGally)
+
+#runs all plots for data exploration
+ggpairs(oaks)
+
+#import size variables
+ht <- oaks$height
+ht <- (ht/max(ht))*100  #relativizes height for inclusion in mlr model
+dbh <- oaks$DBH
+dbh <- (dbh/max(dbh))*100 #relativizes height for inclusion in mlr model
+
+#imports fire effects variables
+#above-ground
+CVS <- oaks$scorch
+charht <- oaks$bole.char.ht
+charbase <- oaks$bole.ch.circ.at.base
+chardbh <- oaks$bole.ch.circ.at.DBH
+#below-ground
+duff.per.cons <- oaks$per.duff.cons
+
+#fall effects
+sprout.vol <- oaks$post.fire.sprouting
+#spring response
+dieback <- oaks$crown.dieback
+########################################
+#measure length of vectors with conditions
+length(which(dieback==100))
+###########################################
+#if we take scorch out of the picture (only 100% CVS), which variable becomes most important?
+sc100 <- subset(oaks, scorch==100)
+mod1 <- lm(crown.dieback~., data = sc100)
+mod2 <- lm(crown.dieback~height, data=sc100)
+
+#############################################
+rmse <- function(x) {sqrt(mean(x^2))}
+
+#linear model 
+mod <- lm(dieback~I(CVS^2)*sprout.vol*dbh)
+summary(mod)
+
+#linear model with all predictors
+mod1 <- lm(crown.dieback~.+I(CVS^2), data = oaks)
+stepAIC(mod1, direction="backward", scope = ~.*.)
+summary(mod1)
+AIC(mod1) #1353
+rmse(mod1$residuals) #19.91
+
+#demonstrates need for sq term in model
+boxcox(lm(dieback+.01~CVS))
+
+#using three predictors, incl dbh, CVs2
+mod2 <- lm(dieback~I(CVS^2)+sprout.vol+dbh+CVS, data=oaks)
+summary(mod2) #r2 =0.54
+AIC (mod2) #1357
+rmse(mod2$residuals) #21.37
+
+#using three sig pred from lm, incl height, CVS2, sprout
+mod3 <- lm(dieback~ht+sprout.vol+I(CVS^2)+CVS)
+summary(mod3) #r2 = .55
+AIC(mod3) #1353
+rmse(mod3$residuals) #20.56
+
+#taking sq term out
+mod3a <- lm(dieback~ht+sprout.vol+CVS)
+summary(mod3a) #r2 = .49
+AIC(mod3a) #1370
+rmse(mod3a$residuals) #21.88
+
+#using ht, dbh, sprout, cvs2 & cvs
+mod4 <- lm(dieback~I(CVS^2)+sprout.vol+dbh+ht+CVS, data=oaks)
+summary(mod4) 
+AIC (mod4) 
+rmse(mod4$residuals) 
+
+
+#only CVS
+mod5 <- lm(dieback~I(CVS^2)) #AIC 1388, r2 .42, rmse 23.6
+mod6 <- lm(dieback~CVS) #AIC 1403, r2 .36 without square term, 24.7
+mod7 <- lm(dieback~CVS+ht+sprout.vol + I(CVS^2)) 
+
+summary(mod6)
+
+slopes <- 2*mod6$coefficients[5]*CVS + mod6$coefficients[2]
+mean(slopes)
+
+AIC(mod6) 
+rmse(mod6$residuals)
+############################################
+#bin tree size 
+cut(height)
+#####################################################
+#prep data from mlr for barplot
+se <- summary(mod3a)$coefficients[,2]
+dat <- data.frame(mod3a$assign, mod3a$coefficients, se)
+dat <- rename(dat, Variable=mod3a.assign, Effect_Size=mod3a.coefficients)
+dat <- filter(dat, Variable>0)
+dat$Variable[dat$Variable == 1] <-  "Height"
+dat$Variable[dat$Variable == 2] <-  "Sprouting"
+dat$Variable[dat$Variable == 3] <-  "Scorch"
+
+############################################
+#ggplot of effect sizes from mod3a
+
+a <- ggplot(dat, aes(Variable))+
+  geom_col(aes(x=Variable, y=Effect_Size), fill=c("turquoise3", "turquoise3", "#F73C09"))+
+  theme(axis.title = element_blank(), axis.text =element_blank())+
+  geom_errorbar(aes(ymin=Effect_Size-se, ymax=Effect_Size+se), width=.1, size=.7)+
+  #geom_hline(aes(yintercept=0), colour="black", size=1)+
+  theme_void()+
+  theme(plot.background = element_rect(fill="#E9B449", color="#E9B449"), panel.grid = element_blank())
+  #geom_text(aes(label = Effect_Size, y=pos), size = 3, hjust = 0.5, vjust = 3)
+
+?ggsave("", a)
+
+####################################################
+#plotz scorch vs. dieback with regression line in basic R plot
+#prep data for plotting
+newx <- order(CVS)
+y=predict(mod4, se.fit = TRUE, type="response")
+#plot
+#sets margins
+par(mar=c(4,5,1,1))
+plot(dieback~jitter(CVS, 5), col = "#FF000050", pch=19, cex=1.8, xlab="Scorch (%)", ylab="Crown dieback (%)", cex.lab=2)
+#adds confidence intervals
+polygon(c(CVS[newx], rev(CVS[newx])), c(y$fit[newx]-1.96*y$se.fit[newx], rev(y$fit[newx]+1.96*y$se.fit[newx])), border="black", col=rgb(0,0,0,0.15))
+curve(predict(mod4,data.frame(CVS=x),type="resp"), lwd=2, add=T, col="blue")
+#adds text
+text(5,95,"P<0.0001\nR²=0.42", font=2, cex=1.5)
+
+segments(CVS-5, (mod6$fitted.values-5)*slopes, CVS+5, (mod6$fitted.values+5)*slopes)
+
+#ggplot of above - but wonky regression line
+ggplot(oaks, aes(x=CVS, y=dieback))+
+  geom_point (aes(CVS, dieback), position="jitter", cex=5, pch=19, alpha=1/4, color="darkorange")+
+  theme(axis.title = element_text(size=20))+
+  geom_smooth(span=7)
+  geom_smooth(method = "lm", formula = y ~ poly(x+.01, 2), colour = "blue", span = 10) 
+############################################################
+#plot of duff consumption vs. dieback showing no effect
+  par(mar=c(4,5,1,1))
+  plot(dieback~jitter(duff.per.cons, 5), col = "#00550050", pch=19, cex=1.8, xlab="Duff consumption (%)", ylab="Crown dieback (%)", cex.lab=2)
+  
+###########################################################  
+#ggplotz the mlr point size = ht, color scale = % sprouting
+ggplot(oaks, aes(x=CVS, y=dieback))+
+geom_point (aes(fill=sprout.vol), position="jitter", cex=(sqrt(ht)*6), pch=21, alpha=1/2)+
+  theme_classic()+
+  scale_fill_gradient(low="yellow", high = "darkorange", limits = c(0,100)) + 
+  labs(x = "Crown scorch (%)", y="Crown dieback (%)")+
+  theme(axis.title = element_text(size=20))+
+  labs(fill = "Post-fire sprouting volume (%)")+
+  theme(legend.position = c(.02,.97), legend.justification = c(0,1))+
+  theme(legend.key = element_rect(colour = 'black', linetype = "solid"))+
+  ylim(-6, 100)
+
+############################################################
+  #post-fire sprouting vs. crown scorch
+  par(mar=c(5,5,1,1))
+  plot(sprout.vol~jitter(CVS, 5), col = "darkorange", pch=21, cex=1.8, 
+       xlab="Scorch (%)", ylab="Sprouting (%)", cex.lab=2, ylim=c(0,100))
+  
+  
+  
+
+  
