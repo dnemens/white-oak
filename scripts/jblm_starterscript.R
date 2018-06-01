@@ -1,5 +1,4 @@
-oaks <- read.csv("~/Grad School/JBLM project/analyses/post_merge_forR.csv")
-oaks <- read.csv("F:/502/post_merge_forR.csv")
+oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/post_merge_forR.csv")
 
 library (plyr)
 library (dplyr)
