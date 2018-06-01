@@ -1,6 +1,5 @@
-oaks <- read.csv("~/Grad School/JBLM project/analyses/ch 2 raw data.csv")
-oaks <- read.csv("G:/for R/ch 2 raw data.csv")
-attach(oaks)
+oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/ch 2 raw data.csv")
+
 
 #loads necessary libraries
 library(dplyr)
@@ -133,7 +132,7 @@ plot(dieback~jitter(CVS, 5), col = "#FF000050", pch=19, cex=1.8, xlab="Scorch (%
 polygon(c(CVS[newx], rev(CVS[newx])), c(y$fit[newx]-1.96*y$se.fit[newx], rev(y$fit[newx]+1.96*y$se.fit[newx])), border="black", col=rgb(0,0,0,0.15))
 curve(predict(mod4,data.frame(CVS=x),type="resp"), lwd=2, add=T, col="blue")
 #adds text
-text(5,95,"P<0.0001\nR²=0.42", font=2, cex=1.5)
+text(5,95,"P<0.0001\nR?=0.42", font=2, cex=1.5)
 
 segments(CVS-5, (mod6$fitted.values-5)*slopes, CVS+5, (mod6$fitted.values+5)*slopes)
 
