@@ -1,18 +1,15 @@
-oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/ch 2 raw data.csv")
+oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/post_merge_forR.csv")
 
 
 #loads necessary libraries
-library(dplyr)
-library(ggplot2)
+library(tidyverse)
 library(MASS)
 library(GGally)
 
-#runs all plots for data exploration
-ggpairs(oaks)
 
 #import size variables
-ht <- oaks$height
-ht <- (ht/max(ht))*100  #relativizes height for inclusion in mlr model
+height <- oaks$height
+height <- (height/max(height))*100  #relativizes height for inclusion in mlr model
 dbh <- oaks$DBH
 dbh <- (dbh/max(dbh))*100 #relativizes height for inclusion in mlr model
 
@@ -25,18 +22,25 @@ chardbh <- oaks$bole.ch.circ.at.DBH
 #below-ground
 duff.per.cons <- oaks$per.duff.cons
 
+#scar stuff
+scar <- as.numeric(oaks$scar)
+scar[is.na(scar)] <- 0
+scar  <- as.factor(if_else(scar>0, 1, 0)) 
+#turns photo numbers (or lack of) into 1's(for scarred) and 0's (for unscarred trees)
+levels(scar) <- c('unscarred', 'scarred')
+
 #fall effects
 sprout.vol <- oaks$post.fire.sprouting
 #spring response
-dieback <- oaks$crown.dieback
+dieback <- oaks$dieback
 ########################################
 #measure length of vectors with conditions
 length(which(dieback==100))
 ###########################################
 #if we take scorch out of the picture (only 100% CVS), which variable becomes most important?
-sc100 <- subset(oaks, scorch==100)
-mod1 <- lm(crown.dieback~., data = sc100)
-mod2 <- lm(crown.dieback~height, data=sc100)
+sc100 <- subset(oaks, CVS==100)
+mod1 <- lm(dieback~., data = sc100)
+mod2 <- lm(dieback~height, data=sc100)
 
 #############################################
 rmse <- function(x) {sqrt(mean(x^2))}
@@ -46,11 +50,11 @@ mod <- lm(dieback~I(CVS^2)*sprout.vol*dbh)
 summary(mod)
 
 #linear model with all predictors
-mod1 <- lm(crown.dieback~.+I(CVS^2), data = oaks)
+mod1 <- lm(dieback~.+I(CVS^2), data = oaks)
 stepAIC(mod1, direction="backward", scope = ~.*.)
 summary(mod1)
-AIC(mod1) #1353
-rmse(mod1$residuals) #19.91
+AIC(mod1) #270
+rmse(mod1$residuals) #9.57
 
 #demonstrates need for sq term in model
 boxcox(lm(dieback+.01~CVS))
@@ -58,26 +62,26 @@ boxcox(lm(dieback+.01~CVS))
 #using three predictors, incl dbh, CVs2
 mod2 <- lm(dieback~I(CVS^2)+sprout.vol+dbh+CVS, data=oaks)
 summary(mod2) #r2 =0.54
-AIC (mod2) #1357
-rmse(mod2$residuals) #21.37
+AIC (mod2) #1796
+rmse(mod2$residuals) #20.51
 
 #using three sig pred from lm, incl height, CVS2, sprout
-mod3 <- lm(dieback~ht+sprout.vol+I(CVS^2)+CVS)
-summary(mod3) #r2 = .55
-AIC(mod3) #1353
-rmse(mod3$residuals) #20.56
+mod3 <- lm(dieback~height+sprout.vol+I(CVS^2)+CVS)
+summary(mod3) #r2 = .54
+AIC(mod3) #1791
+rmse(mod3$residuals) #20.24
 
 #taking sq term out
-mod3a <- lm(dieback~ht+sprout.vol+CVS)
+mod3a <- lm(dieback~height+sprout.vol+CVS)
 summary(mod3a) #r2 = .49
-AIC(mod3a) #1370
-rmse(mod3a$residuals) #21.88
+AIC(mod3a) #1811
+rmse(mod3a$residuals) #21.35
 
 #using ht, dbh, sprout, cvs2 & cvs
-mod4 <- lm(dieback~I(CVS^2)+sprout.vol+dbh+ht+CVS, data=oaks)
+mod4 <- lm(dieback~I(CVS^2)+sprout.vol+dbh+height+CVS, data=oaks)
 summary(mod4) 
-AIC (mod4) 
-rmse(mod4$residuals) 
+AIC (mod4) #1791
+rmse(mod4$residuals) #20.51
 
 
 #only CVS
