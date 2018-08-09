@@ -49,12 +49,19 @@ rmse <- function(x) {sqrt(mean(x^2))}
 mod <- lm(dieback~I(CVS^2)*sprout.vol*dbh)
 summary(mod)
 
+mod1b <- lm(dieback~CVS)
+summary(mod1b)
+
+
 #linear model with all predictors
 mod1 <- lm(dieback~.+I(CVS^2), data = oaks)
-stepAIC(mod1, direction="backward", scope = ~.*.)
-summary(mod1)
+mod1a <- lm(dieback~., data = oaks)
+stepAIC(mod1a, direction="forward", scope = ~.*.)
+summary(mod1a)
 AIC(mod1) #270
 rmse(mod1$residuals) #9.57
+
+
 
 #demonstrates need for sq term in model
 boxcox(lm(dieback+.01~CVS))

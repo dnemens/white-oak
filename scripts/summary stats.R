@@ -51,8 +51,14 @@ mean(dieback)
 length(which(CVS>0))
 mean(CVS)
 
+mean(dieback[which(CVS<=80)])
+dead <- subset(oaks, dieback==100)
+range(dieback[which(CVS==100)])
+
 #char
 mean(charht)
+
+
 ######################################################
 #lm for duff % consumption vs. duff depth
 duff.lm <- lm(duff.per.cons~duff.depth)
