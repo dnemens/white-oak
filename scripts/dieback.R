@@ -9,31 +9,39 @@ library(GGally)
 
 #import size variables
 height <- oaks$height
-height <- (height/max(height))*100  #relativizes height for inclusion in mlr model
+height.r <- (height/max(height))*100  #relativizes height for inclusion in mlr model
 dbh <- oaks$DBH
-dbh <- (dbh/max(dbh))*100 #relativizes height for inclusion in mlr model
+dbh.r <- (dbh/max(dbh))*100 #relativizes height for inclusion in mlr model
+cbh <- oaks$crown.base.ht.m
 
 #imports fire effects variables
 #above-ground
-CVS <- oaks$scorch
+cvs <- oaks$CVS
 charht <- oaks$bole.char.ht
-charbase <- oaks$bole.ch.circ.at.base
-chardbh <- oaks$bole.ch.circ.at.DBH
+charbase <- oaks$bole.ch.base.perc
+chardbh <- oaks$bole.ch.DBH.perc
 #below-ground
-duff.per.cons <- oaks$per.duff.cons
+duff.per.cons <- oaks$percent.duff.cons
 
 #scar stuff
 scar <- as.numeric(oaks$scar)
 scar[is.na(scar)] <- 0
 scar  <- as.factor(if_else(scar>0, 1, 0)) 
 #turns photo numbers (or lack of) into 1's(for scarred) and 0's (for unscarred trees)
-levels(scar) <- c('unscarred', 'scarred')
+levels(scar) <- c('Unscarred', 'Scarred')
 
 #fall effects
-sprout.vol <- oaks$post.fire.sprouting
+sprout.vol <- oaks$Cvsprouting.percent
 #spring response
 dieback <- oaks$dieback
-########################################
+#######
+#create df with relevant variables
+oaks2 <- data.frame(height, dbh, cbh, cvs, charht, charbase, chardbh, duff.per.cons, sprout.vol, dieback)
+#create comparison plots of all variables
+plots <- ggpairs(oaks2)
+ggsave("all.variables.pdf", device="pdf", plot=plots, width = 20, height = 15, units = "cm", dpi=300)
+
+#################################
 #measure length of vectors with conditions
 length(which(dieback==100))
 ###########################################
@@ -46,10 +54,10 @@ mod2 <- lm(dieback~height, data=sc100)
 rmse <- function(x) {sqrt(mean(x^2))}
 
 #linear model 
-mod <- lm(dieback~I(CVS^2)*sprout.vol*dbh)
+mod <- lm(dieback~I(cvs^2)*sprout.vol*dbh)
 summary(mod)
 
-mod1b <- lm(dieback~CVS)
+mod1b <- lm(dieback~cvs)
 summary(mod1b)
 
 
@@ -64,7 +72,7 @@ rmse(mod1$residuals) #9.57
 
 
 #demonstrates need for sq term in model
-boxcox(lm(dieback+.01~CVS))
+boxcox(lm(dieback+.01~cvs))
 
 #using three predictors, incl dbh, CVs2
 mod2 <- lm(dieback~I(CVS^2)+sprout.vol+dbh+CVS, data=oaks)
@@ -174,7 +182,7 @@ geom_point (aes(fill=sprout.vol), position="jitter", cex=(sqrt(ht)*6), pch=21, a
 ############################################################
   #post-fire sprouting vs. crown scorch
   par(mar=c(5,5,1,1))
-  plot(sprout.vol~jitter(CVS, 5), col = "darkorange", pch=21, cex=1.8, 
+  plot(sprout.vol~jitter(cvs, 5), col = "darkorange", pch=21, cex=1.8, 
        xlab="Scorch (%)", ylab="Sprouting (%)", cex.lab=2, ylim=c(0,100))
   
   
