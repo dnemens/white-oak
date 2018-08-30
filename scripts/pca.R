@@ -1,3 +1,5 @@
+## using PCA, we reduce the tree size variables to one for analsis of effect on response variables
+
 oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/post_merge_forR.csv")
 
 library (tidyverse)
@@ -30,7 +32,12 @@ size1.PCA <- prcomp(size, scale.=TRUE, center=TRUE)
 summary (size1.PCA)
 biplot(size1.PCA)
 
+#extract PCA scores for PC1, which accounts for 70% of variation
 scores <- size1.PCA$x[,1]
 
 hrm <- lm(dieback~scores)
 summary(hrm)
+
+#plot it
+plot(dieback~scores)
+curve(predict(hrm,data.frame(scores=x),type="resp"), lwd=2, add=T, col="blue")
