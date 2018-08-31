@@ -113,7 +113,9 @@ AIC(mod6)
 rmse(mod6$residuals)
 ############################################
 #bin tree size 
-cut(height)
+bins <- cut(height, breaks = 5)
+bin.df <- data.frame(oaks$site, bins)
+mutate(bin.df, bin=mean(bins))
 #####################################################
 #prep data from mlr for barplot
 se <- summary(mod3a)$coefficients[,2]
