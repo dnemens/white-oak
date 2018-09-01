@@ -55,10 +55,27 @@ mean(dieback[which(CVS<=80)])
 dead <- subset(oaks, dieback==100)
 range(dieback[which(CVS==100)])
 
-#char
-mean(charht)
+##########
+#for comparison with fofem outputs
 
+oaks %>%
+  group_by(site) %>%
+  summarise(dbh_k = mean(DBH.cm[which(dieback==100)]))
+            
+            , per_mort = ((length[which(dieback==100)])/50))
 
+uwtt <- subset(oaks, site=="UWTT")
+length(which[uwtt$dieback==100])
+##########
+
+#for fire effects comparison table
+comp <-  oaks %>%
+  group_by(site) %>%
+  summarise(bch.m = mean(bole.char.ht.cm), bch.sd = sd(bole.char.ht.cm), bcc.m = mean(bole.ch.base.perc), bcc.sd = sd(bole.ch.base.perc), dbhcc.m = mean(bole.ch.DBH.perc), dbhcc.sd = sd(bole.ch.DBH.perc), pcvs.m = mean(CVS), pcvs.sd = sd(CVS), duff.cm.m = mean(mean.depth.consumed.cm), duff.cm.sd = sd(mean.depth.consumed.cm), duff.per.m = mean(percent.duff.cons), duff.per.sd = sd(percent.duff.cons), dieback.m = mean(dieback), dieback.sd = sd(dieback))
+
+comp <- t(comp)
+
+write.csv(comp, file = "C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/sum.fireffs.csv")
 ######################################################
 #lm for duff % consumption vs. duff depth
 duff.lm <- lm(duff.per.cons~duff.depth)

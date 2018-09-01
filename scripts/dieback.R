@@ -39,7 +39,7 @@ dieback <- oaks$dieback
 oaks2 <- data.frame(height, dbh, cbh, cvs, charht, charbase, chardbh, duff.per.cons, sprout.vol, dieback)
 #create comparison plots of all variables
 plots <- ggpairs(oaks2)
-ggsave("all.variables.pdf", device="pdf", plot=plots, width = 20, height = 15, units = "cm", dpi=300)
+ggsave("~/plots/all.variables.pdf", device="pdf", plot=plots, width = 20, height = 15, units = "cm", dpi=300)
 
 #################################
 #measure length of vectors with conditions
@@ -53,6 +53,20 @@ mod2 <- lm(dieback~height, data=sc100)
 #############################################
 rmse <- function(x) {sqrt(mean(x^2))}
 
+#amend data frame for modeling
+oak.sub <- oaks %>%
+  select (DBH.cm:Cvsprouting.percent, -stems, -CVC, -mean.depth.consumed.cm, -mean.duff.depth.cm, dieback)
+
+#linear model with all predictors
+mod1 <- lm(dieback~., data = oak.sub)
+summary(mod1)
+step.mod <- stepAIC(mod1, direction="backward", scope = ~.*.)
+summary(step.mod)
+AIC(mod1) 
+rmse(mod1$residuals) 
+
+mod.ppca <- lm(dieback~scores+cvs+bole.ch.DBH.perc+cvsprouting)
+
 #linear model 
 mod <- lm(dieback~I(cvs^2)*sprout.vol*dbh)
 summary(mod)
@@ -61,13 +75,7 @@ mod1b <- lm(dieback~cvs)
 summary(mod1b)
 
 
-#linear model with all predictors
-mod1 <- lm(dieback~.+I(CVS^2), data = oaks)
-mod1a <- lm(dieback~., data = oaks)
-stepAIC(mod1a, direction="forward", scope = ~.*.)
-summary(mod1a)
-AIC(mod1) #270
-rmse(mod1$residuals) #9.57
+
 
 
 
