@@ -1,7 +1,4 @@
-oaks <- read.csv("~/Grad School/JBLM project/analyses/post_merge_forR.csv")
-oaks <- subset(oaks, oaks$mean.duff.depth.cm<13)
-oaks <- read.csv("E:/for R/post_merge_forR.csv")
-oaks [is.na(oaks)] <- 0
+oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/post_merge_forR.csv")
 
 library (plyr)
 library (dplyr)
@@ -12,7 +9,7 @@ site <- oaks$site
 tag <- oaks$tag
 
 depth.cons <- oaks$mean.depth.consumed.cm
-depth.cons <- cons[which(cons>0)]
+summarydepth.cons <- depth.cons[which(depth.cons>0)]
 
 duff.depth <- oaks$mean.duff.depth.cm
 

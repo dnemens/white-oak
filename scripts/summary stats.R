@@ -1,18 +1,15 @@
 oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/post_merge_forR.csv")
 
-library (plyr)
-library (dplyr)
+library(tidyverse)
 library (vegan)
 library(ggplot2)
 library (rcompanion)
 library(GGally)
 
-#oaks = oaks[!oaks$tag==469,] #removes tree that has no spatial coordinates
-
-site <- oaks$site
-
 #runs all plots for data exploration
 ggpairs(oaks)
+
+site <- oaks$site
 
 # imports tree characteristics (first set of explanatory variables)
 height <- oaks$height.m
@@ -25,7 +22,7 @@ scar  <- as.factor(if_else(scar>0, 1, 0))
 levels(scar) <- c('unscarred', 'scarred')
 
 #imports fire effects variables
-CVS <- oaks$CVS
+cvs <- oaks$CVS
 charht <- oaks$bole.char.ht.cm
 charbase <- oaks$bole.ch.base.perc*100
 chardbh <- oaks$bole.ch.DBH.perc
@@ -40,32 +37,39 @@ duff.per.cons <- duff.per.cons[which(duff.per.cons>0)]
 duff.depth <- duff.depth[which(duff.depth>0)]
 df <- data.frame(depth.cons, duff.depth, duff.per.cons)
 
+### response variable
+dieback <- oaks$dieback
+
 #####################################################
 #summary stats###
 
 #topkilled
 length(which(dieback==100))
 mean(dieback)
+dead <- oaks$tag[(which(dieback==100))]
+dead.dbh <- dbh[(which(dieback==100))]
+dbdead <- data.frame(dead, dead.dbh)
+plot()
 
-#scorch
+#scorched
 length(which(CVS>0))
 mean(CVS)
+####
+try <- subset(oak.subs, cvs==100)
+plot(try$dieback~try$scores)
+plot(dieback~dbh)
 
-mean(dieback[which(CVS<=80)])
-dead <- subset(oaks, dieback==100)
-range(dieback[which(CVS==100)])
+mean(dieback[which(cvs>80)])
+range(dieback[which(cvs==100)])
 
 ##########
 #for comparison with fofem outputs
 
 oaks %>%
   group_by(site) %>%
-  summarise(dbh_k = mean(DBH.cm[which(dieback==100)]))
-            
-            , per_mort = ((length[which(dieback==100)])/50))
+  filter(dieback==100) %>%
+  summarise(dbh_k = n()/50)
 
-uwtt <- subset(oaks, site=="UWTT")
-length(which[uwtt$dieback==100])
 ##########
 
 #for fire effects comparison table

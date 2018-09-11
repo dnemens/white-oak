@@ -21,3 +21,20 @@ summed <- fofem %>%
   rename('#Std'= X.Std)
 
 write.csv(summed, file = "C:/Users/dnemens/Dropbox/OWO/Fofem/fofem_sum.csv", row.names = F)
+###########################################
+#apply formula used in fofem directly to data?
+#calculate bark thickness from FVS-FFE guide (#multiplier for OWO = 0.029)
+
+bt <- fofem$DBH*.029
+oaks <- read.csv("C:/Users/dnemens/Dropbox/OWO/white-oak/data sheets/post_merge_forR.csv")
+cs <- oaks$CVS/100 #proportion or percent?  
+
+#function
+fo <- function (BT, CS) {1/(1+exp(-1.941+(6.361*(1.0-exp(-BT)))-0.000535*CS^2))}
+
+pmort <- fo (bt, cs)
+
+#this gives very high prob mort
+
+
+

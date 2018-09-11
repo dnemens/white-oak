@@ -108,4 +108,4 @@ setwd("C:/Users/dnemens/Dropbox/OWO")
 ### read in shapefile ###
 trees  <- readOGR("maps/GIS", "all_oaks")
 
-coodinates <- trees@data$Northing
+coordinates <- trees@data$Northing

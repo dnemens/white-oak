@@ -40,4 +40,27 @@ summary(hrm)
 
 #plot it
 plot(dieback~scores)
-curve(predict(hrm,data.frame(scores=x),type="resp"), lwd=2, add=T, col="blue")
+curve(predict(hrm, data.frame(scores=x),type="resp"), lwd=2, add=T, col="blue")
+
+#second PCA including DBH + height only
+size2 <- size[,1:2]
+size2.pca <- prcomp(size2, scale. = T, center = T)
+summary(size2.pca)
+biplot(size2.pca)
+
+#extract PCA scores for PC1, which accounts for 86% of variation
+scores2 <- size2.pca$x[,1]
+
+###################
+#pca of fire effects variables
+#create data.frame
+effs <- data.frame(cvs, charht, chardbh, charbase, duff.per.cons, sprout.vol)
+effs.pc <- princomp(effs, scale = T, center = T)
+summary(effs.pc)
+biplot(effs.pc)
+effs.scores <- effs.pc$x[,1]
+
+ef <- vegdist(effs, method = "bray")
+effs.perm <- adonis(effs~site, permutations=999, method="bray")
+summary(effs.perm)
+effs.perm
