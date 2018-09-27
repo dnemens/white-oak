@@ -31,25 +31,54 @@ duff.depth <- duff.depth[which(duff.depth>0)]
 
 dieback <- as.numeric(oaks$dieback)
 sprout.vol <- oaks$Cvsprouting.percent
+secyr.status <- oaks$X2yr.status
 #############################################################
 #histogram of diameter distribution with live/dead trees
-Mortality <- if_else(dieback==100, "Top-killed", "Alive")
+Mortality <- if_else(dieback==100, "Topkilled", "Alive")
 df <- data.frame(dieback, dbh, Mortality)
 df$Mortality<- factor(df$Mortality, levels=levels(df$Mortality)[order(levels(df$Mortality), decreasing = TRUE)])
 
-ggplot(df, aes(x=dbh, fill=Mortality))+ 
+a <- ggplot(df, aes(x=dbh, fill=Mortality))+ 
   geom_histogram(binwidth=5, position="stack", colour="black") +
   theme_bw()+
-  theme(panel.grid.major=element_blank(), panel.grid.minor = element_blank(), legend.position = c(.8,.8), axis.title = element_text(size=24), axis.text = element_text(size=16),  legend.text = element_text(size=15), legend.title = element_blank()) +
-  scale_fill_manual(values=c("grey20", "grey80")) +
-  xlim(0,70) +
+  theme(panel.grid.major=element_blank(), panel.grid.minor = element_blank(), legend.position = c(.8,.8), axis.title = element_text(size=22), axis.text = element_text(size=14),  legend.text = element_text(size=15), legend.title = element_blank(), axis.title.x =element_blank()) +
+  scale_fill_manual(values=c("grey20", "chartreuse3")) +
+  xlim(0,65) +
+  scale_y_continuous(limits = c(0,50), expand = c(0, 0)) +
+  #xlab("Diameter (cm)") +
+  ylab("Frequency") +
+  guides(fill = guide_legend(reverse = T))+
+  theme(plot.margin=unit(c(.7,1,.5,.5),"cm"))+
+  annotate("text", x=64, y=45, label="a)", size=8)
+
+############same hist but with 2-yr post data##############
+levels(secyr.status) <- list(Alive="L", Dead="D", Topkilled="TK")
+df2 <- data.frame(secyr.status, dbh)
+
+df2$secyr.status<- factor(df2$secyr.status, levels=levels(df2$secyr.status)[order(levels(df2$secyr.status), decreasing = T)])
+
+b <- ggplot(df2, aes(x=dbh, fill=secyr.status))+ 
+  geom_histogram(binwidth=5, position="stack", colour="black") +
+  theme_bw()+
+  theme(panel.grid.major=element_blank(), panel.grid.minor = element_blank(), legend.position = c(.8,.8), axis.title = element_text(size=22), axis.text = element_text(size=14),  legend.text = element_text(size=15), legend.title = element_blank()) +
+  scale_fill_manual(values=c("grey20", "tomato","chartreuse3")) +
+  xlim(0,65) +
   scale_y_continuous(limits = c(0,50), expand = c(0, 0)) +
   xlab("Diameter (cm)") +
   ylab("Frequency") +
-  guides(fill = guide_legend(reverse = F))+
-  theme(plot.margin=unit(c(.7,1,.5,.5),"cm"))
+  guides(fill = guide_legend(reverse = T))+
+  theme(plot.margin=unit(c(.7,1,.5,.5),"cm"))+
+  annotate("text", x=64, y=45, label="b)", size=8)
+########
+#stack plots
 
-ggsave("dbh_hist.tiff", device="tiff", dpi = 300, width = 20, height= 15, units = "cm")
+library(gridExtra)
+c <- grid.arrange(a, b)
+
+
+#save file
+setwd("C:/Users/dnemens/Dropbox/OWO/plots")
+ggsave(plot=c, "dbh_hist2.tiff", device="tiff", dpi = 300, width = 20, height= 25, units = "cm")
 
 ############################################################
 #logistic regression of bud break vs. fire effects 

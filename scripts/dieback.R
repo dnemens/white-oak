@@ -5,6 +5,8 @@ library(MASS)
 library(tidyverse)
 library(GGally)
 
+site <- oaks$site
+
 #import size variables
 height <- oaks$height
 height.r <- (height/max(height))*100  #relativizes height for inclusion in mlr model
@@ -29,7 +31,7 @@ scar  <- as.factor(if_else(scar>0, 1, 0))
 levels(scar) <- c('Unscarred', 'Scarred')
 
 #fall effects
-sprout.vol <- oaks$Cvsprouting.percent
+sprout.vol <- oaks$Cvsprouting.percent[which(site!="HLD02")]
 #spring response
 dieback <- oaks$dieback
 #######
@@ -62,7 +64,8 @@ oak.subs <- data.frame(oak.sub, scores)
 
 oak.sub <- oak.subs[,4:11]
 
-#linear model with all predictors
+#################################
+##linear model with all predictors
 mod1 <- lm(dieback~., data = oak.sub)
 summary(mod1)
 AIC(mod1) 
@@ -90,7 +93,8 @@ rmse(best2$residuals) #19.73
 ##########same process without the pca of size metrics
 oak.sub2 <- oaks %>%
   select (DBH.cm:Cvsprouting.percent, -stems, -CVC, -mean.depth.consumed.cm, -mean.duff.depth.cm, dieback)
-mod2 <- lm(formula = dieback~., data=oak.sub2)
+mod2 <- lm(formula = dieback~.*., data=oak.sub2)
+summary(mod2)
 step2 <- stepAIC(mod2, direction = "backward", scope = ~.*.)
 summary(step2)
 
@@ -98,12 +102,40 @@ best2 <- lm(dieback ~ height + cvs + chardbh )
 summary(best2)
 
 ####################################
+#or glm with gamma dist?  
+modg <- glm((dieback)~., family=Gamma(link="sqrt"), data = oak.sub)
+summary(modg)
+AIC(modg)
+##
+modgl <- glm((dieback)~., family=Gamma(link="log"), data = oak.sub)
+summary(modgl)
+AIC(modgl)
+rmse(modgl$residuals)
+modg$aic
+
+step.mod <- stepAIC(mod1, direction="backward", scope = ~.*.)
+summary(step.mod)
+
+best.glm <- glm((dieback)~ cvs + chardbh + scores, family=Gamma(link="log"))
+summary(best.glm)
+rmse(best.glm$residuals)
+AIC(best.glm)
+
+step.bestglm <- stepAIC(best.glm, direction = "forward", scope = ~.*.)
+summary(step.bestglm)
+#no improvement adding interaction terms
+
+step.bestglm$aic
+rmse(step.bestglm$residuals)
+step.bestglm$aic
+
+##############################################
 #creates summary table of all model runs with eval criteria used
 pooter <- function(predictors, response = "dieback"){
   x <- list()
   temp <- paste(predictors, collapse = " + ")
   x$formula <- paste(response, "~", temp)
-  mod <- lm(as.formula(x$formula))
+  mod <- glm(as.formula(x$formula), family=Gamma(link="log"))
   x$AIC <- AIC(mod)
   x$RMSE <- rmse(mod$residuals)
   x$R2 <- summary(mod)$r.squared
